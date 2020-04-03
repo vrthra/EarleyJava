@@ -1,8 +1,11 @@
 package parser;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -19,6 +22,62 @@ class GDef extends ArrayList<GRule> {
 class Grammar extends HashMap<String, GDef> {
     public Grammar() {
     }
+}
+
+class G {
+    Grammar grammar;
+    Map<String, Double> min_len;
+    G(Grammar g) {
+        this.grammar = g;
+        this.min_len = this.compute_min_length();
+    }
+
+    public List<String> nullable() {
+        List<String> nullable = new ArrayList<String>();
+        for (String key : this.min_len.keySet()) {
+            if (this.min_len.get(key) == 0.0) {
+                nullable.add(key);
+            }
+        }
+        return nullable;
+    }
+
+    private double _key_min_length(String k, Set<String> seen) {
+        if (!this.grammar.containsKey(k)) {
+            return k.length();
+        }
+        if (seen.contains(k)) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        double min = 0;
+        for (GRule r : this.grammar.get(k)) {
+            Set<String> inter = new HashSet<String>(seen);
+            inter.add(k);
+            double m = this._rule_min_length(r, inter);
+            if (m < min) {
+                min = m;
+            }
+        }
+        return min;
+    }
+
+    private double _rule_min_length(GRule rule, Set<String> seen) {
+        double sum = 0;
+        for (String k : rule) {
+            sum += this._key_min_length(k, seen);
+        }
+        return sum;
+    }
+
+    Map<String, Double> compute_min_length() {
+        Map<String, Double> min_len = new HashMap<String, Double>();
+        for (String k : this.grammar.keySet()) {
+            min_len.put(k, _key_min_length(k, new HashSet<String>()));
+        }
+        return min_len;
+    }
+
 }
 
 public class ParserLib {
@@ -226,45 +285,6 @@ class Column {
         return this.transitives.get(key);
     }
 }
-
-/*
-def fixpoint(f):
-    def helper(arg):
-        while True:
-            sarg = str(arg)
-            arg_ = f(arg)
-            if str(arg_) == sarg:
-                return arg
-            arg = arg_
-
-    return helper
-
-def rules(grammar):
-    return [(key, choice)
-            for key, choices in grammar.items()
-            for choice in choices]
-
-def terminals(grammar):
-    return set(token
-               for key, choice in rules(grammar)
-               for token in choice if token not in grammar)
-
-def nullable_expr(expr, nullables):
-    return all(token in nullables for token in expr)
-
-def nullable(grammar):
-    productions = rules(grammar)
-
-    @fixpoint
-    def nullable_(nullables):
-        for A, expr in productions:
-            if nullable_expr(expr, nullables):
-                nullables |= {A}
-        return (nullables)
-
-    return nullable_({EPSILON})
-*/
-
 
 /*
 class EarleyParser(Parser):
