@@ -140,15 +140,21 @@ class State extends Item {
         this.e_col = e_col;
     }
 
+    String _idx(Column v) {
+        if (v == null) return "-1";
+        return Integer.toString(v.index);
+    }
+
     public String toString() {
-        return "";
-        /*
-         * def idx(var): return var.index if var else -1
-         * 
-         * return self.name + ':= ' + ' '.join([ str(p) for p in [*self.expr[:self.dot],
-         * '|', *self.expr[self.dot:]] ]) + "(%d,%d)" % (idx(self.s_col),
-         * idx(self.e_col))
-         */
+        ArrayList<String> lst = new ArrayList<String>();
+        for (int i = 0; i < this.expr.size(); i++) {
+            lst.add(this.expr.get(i).toString());
+            if (i == this.dot) {
+                lst.add("|");
+            }
+        }
+        //lst = [ str(p) for p in [*this.expr[:this.dot], '|', *this.expr[this.dot:]] ]
+        return this.name + ":= " + String.join(" ", lst) + _idx(this.s_col) + "," + _idx(this.e_col);
     }
 
     State copy() {
@@ -162,16 +168,14 @@ class State extends Item {
     State back() {
         return new TState(this.name, this.expr, this.dot - 1, this.s_col, this.e_col);
     }
-/*
-    def _t(self):
-        return (self.name, self.expr, self.dot, self.s_col.index)
 
-    def __hash__(self):
-        return hash(self._t())
+    String _t() {
+        return (this.name + "," + this.expr.toString() + "," + this.dot + "," + this.s_col.index);
+    }
 
-    def __eq__(self, other):
-        return self._t() == other._t()
-*/
+    boolean equals(State s) {
+        return this._t() == s._t();
+    }
 }
 
 class TState extends State {
@@ -182,7 +186,6 @@ class TState extends State {
         return new TState(this.name, this.expr, this.dot, this.s_col, this.e_col);
     }
 }
-
 
 class Column {
     int index;
