@@ -34,11 +34,11 @@ class VKC {
 }
 
 class NamedForest {
-    private String name;
-    private ArrayList<VKC> vkc;
-    public NamedForest(String name, ArrayList<VKC> vkc) {
+    String name;
+    ArrayList<ArrayList<VKC>> paths;
+    public NamedForest(String name, ArrayList<ArrayList<VKC>> vkcs) {
         this.name = name;
-        this.vkc = vkc;
+        this.paths = vkcs;
     }
 }
 
@@ -161,17 +161,25 @@ public class ParserLib {
 // Parser.py
 
 class ParseTree {
+    String name;
+    ArrayList<ParseTree> children;
+    public ParseTree(String name, ArrayList<ParseTree> children) {
+        this.name = name;
+        this.children = children;
+    }
 }
 
 class ParseForest implements Iterable<ParseTree> {
     int cursor;
-    public ParseForest(int cursor, List<State> p) {
-        // TODO
+    List<State> states;
+    public ParseForest(int cursor, List<State> states) {
         this.cursor = cursor;
+        this.states = states;
     }
 
     @Override
     public Iterator<ParseTree> iterator() {
+        // TODO
         return null;
     }
 
@@ -500,14 +508,16 @@ class EarleyParser extends Parser {
             pathexprs = new ArrayList<ArrayList<SK>>();
         }
 
-        ArrayList<VKC> vkc = new ArrayList<VKC>();
+        ArrayList<ArrayList<VKC>> vkcs = new ArrayList<ArrayList<VKC>>();
         for (ArrayList<SK> pathexpr: pathexprs) {
+            ArrayList<VKC> vkc = new ArrayList<VKC>();
             for (int i = pathexpr.size(); i != 0; i--) {
                 SK vk = pathexpr.get(i - 1);
                 vkc.add(new VKC(vk, chart));
             }
+            vkcs.add(vkc);
         }
-        return new NamedForest(state.name, vkc);
+        return new NamedForest(state.name, vkcs);
         /*return state.name, [[(v, k, chart) for v, k in reversed(pathexpr)]
                             for pathexpr in pathexprs];*/
     }
@@ -516,33 +526,51 @@ class EarleyParser extends Parser {
         if (kind == 'n') {
             return this.parse_forest(chart, s);
         } else {
-             return new NamedForest(s.name, new ArrayList<VKC>());
+             return new NamedForest(s.name, new ArrayList<ArrayList<VKC>>());
          }
     }
 
+    ParseTree extract_a_tree(NamedForest forest_node) {
+        if (forest_node.paths.isEmpty()) {
+            return new ParseTree(forest_node.name, new ArrayList<ParseTree>());
+        }
 
+        ArrayList<ParseTree> lst = new ArrayList<ParseTree>();
+
+		for (VKC p : forest_node.paths.get(0)) {
+            lst.add(this.extract_a_tree(this.forest(p.sk.s, p.sk.k, p.chart)));
+        }
+        //[self.extract_a_tree(self.forest(*p)) for p in paths[0]]
+        return new ParseTree(forest_node.name, lst);
+    }
+
+
+    Iterator<ParseTree> extract_trees(NamedForest forest) {
+        ArrayList<ParseTree> pt = new ArrayList<ParseTree>();
+        pt.add(this.extract_a_tree(forest));
+        return pt.iterator();
+    }
+
+    public Iterator<ParseTree> parse(String text,String start_symbol) throws ParseException {
+        ParseForest p = this.parse_prefix(text, start_symbol);
+        State start = null;
+        for (State s : p.states) {
+            if (s.finished()) {
+                start = s;
+            }
+        }
+
+        if (p.cursor < text.length() || (start == null)) {
+            throw new ParseException("at " + p.cursor);
+        }
+
+        NamedForest forest = this.parse_forest(this.table, start);
+        return this.extract_trees(forest);
+    }
 /*
 
-    def parse(self, text, start_symbol):
-        cursor, states = self.parse_prefix(text, start_symbol)
-        start = next((s for s in states if s.finished()), None)
-
-        if cursor < len(text) or not start:
-            raise SyntaxError("at " + repr(text[cursor:]))
-
-        forest = self.parse_forest(self.table, start)
-        for tree in self.extract_trees(forest):
-            yield tree
 
 
-    def extract_a_tree(self, forest_node):
-        name, paths = forest_node
-        if not paths:
-            return (name, [])
-        return (name, [self.extract_a_tree(self.forest(*p)) for p in paths[0]])
-
-    def extract_trees(self, forest):
-        yield self.extract_a_tree(forest)
 
     def extract_trees(self, forest_node):
         name, paths = forest_node
