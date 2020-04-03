@@ -180,11 +180,11 @@ class Item {
         return new Item(this.name, this.expr, this.dot + 1);
     }
 
-    public boolean at_dot() {
+    public String at_dot() {
         if (this.dot < this.expr.size()) {
-            return this.expr.get(this.dot) != null;
+            return this.expr.get(this.dot);
         } else {
-            return false;
+            return null;
         }
     }
 
