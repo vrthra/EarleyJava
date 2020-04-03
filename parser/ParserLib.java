@@ -1,13 +1,28 @@
 package parser;
-import java.util.HashMap;
-import java.util.ArrayList;
 
-class GRule extends ArrayList<String> { public GRule(){} }
-class GDef extends ArrayList<GRule> { public GDef(){} }
-class Grammar extends HashMap<String, GDef>{ public Grammar(){}}
+import java.util.HashMap;
+import java.util.Iterator;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+class GRule extends ArrayList<String> {
+    public GRule() {
+    }
+}
+
+class GDef extends ArrayList<GRule> {
+    public GDef() {
+    }
+}
+
+class Grammar extends HashMap<String, GDef> {
+    public Grammar() {
+    }
+}
 
 public class ParserLib {
-    Grammar single_char_tokens(Grammar grammar) {
+    static Grammar single_char_tokens(Grammar grammar) {
         Grammar g_ = new Grammar();
         for (String key : grammar.keySet()) {
             GDef rules_ = new GDef();
@@ -34,117 +49,68 @@ public class ParserLib {
     }
 }
 // Parser.py
-/*
-def fixpoint(f):
-    def helper(arg):
-        while True:
-            sarg = str(arg)
-            arg_ = f(arg)
-            if str(arg_) == sarg:
-                return arg
-            arg = arg_
 
-    return helper
+class ParseTree {
+}
 
-def rules(grammar):
-    return [(key, choice)
-            for key, choices in grammar.items()
-            for choice in choices]
+class ParseForest implements Iterable<ParseTree> {
+    int cursor;
 
-def terminals(grammar):
-    return set(token
-               for key, choice in rules(grammar)
-               for token in choice if token not in grammar)
+    @Override
+    public Iterator<ParseTree> iterator() {
+        return null;
+    }
 
-def nullable_expr(expr, nullables):
-    return all(token in nullables for token in expr)
+}
 
-def nullable(grammar):
-    productions = rules(grammar)
+interface ParserI {
+    ParseForest parse_prefix(String text);
+    Iterator<ParseTree> parse(String text) throws ParseException;
+}
 
-    @fixpoint
-    def nullable_(nullables):
-        for A, expr in productions:
-            if nullable_expr(expr, nullables):
-                nullables |= {A}
-        return (nullables)
+abstract class Parser implements ParserI {
+    String start_symbol;
+    Grammar grammar;
+    Parser(Grammar grammar) {
+        this(grammar, "<start>");
+    }
+    Parser(Grammar grammar, String start_symbol) {
+        this.start_symbol = start_symbol;
+        this.grammar = ParserLib.single_char_tokens(grammar);
+        // we do not require a single rule for the start symbol
+        int start_rules_len = grammar.get(start_symbol).size();
+        if (start_rules_len != 1) {
+            GRule gr = new GRule();
+            gr.addAll(Arrays.asList(new String[]{this.start_symbol}));
+            GDef gd = new GDef();
+            gd.addAll(Arrays.asList(new GRule[]{gr}));
+            this.grammar.put("<>", gd);
+        }
+    }
 
-    return nullable_({EPSILON})
+    @Override
+    public Iterator<ParseTree> parse(String text) throws ParseException {
+        ParseForest p = this.parse_prefix(text);
 
-*/
+        if (p.cursor < text.length()) {
+            throw new ParseException("Syntax Error at: " + p.cursor);
+        }
+        return p.iterator();
+    }
 
-/*
-class Parser:
-    def grammar(self):
-        return self.cgrammar
+    public Iterator<ParseTree> parse_on(String text, String start_symbol) throws ParseException {
+        String old_start = this.start_symbol;
+        try {
+            this.start_symbol = start_symbol;
+            return this.parse(text);
+        } finally {
+            // TODO. This is not what we want. We want this entire parse to happen
+            // on start_symbol, and at the end reset the object back to old_start
+            this.start_symbol = old_start;
+        }
+    }
+}
 
-    def start_symbol(self):
-        return self._start_symbol
-
-    def parse_prefix(self, text):
-        """Return pair (cursor, forest) for longest prefix of text"""
-        raise NotImplemented()
-
-    def parse(self, text):
-        cursor, forest = self.parse_prefix(text)
-        if cursor < len(text):
-            raise SyntaxError("at " + repr(text[cursor:]))
-        return [self.prune_tree(tree) for tree in forest]
-
-    def parse_on(self, text, start_symbol):
-        old_start = self._start_symbol
-        try:
-            self._start_symbol = start_symbol
-            yield from self.parse(text)
-        finally:
-            self._start_symbol = old_start
-
-    def coalesce(self, children):
-        last = ''
-        new_lst = []
-        for cn, cc in children:
-            if cn not in self.cgrammar:
-                last += cn
-            else:
-                if last:
-                    new_lst.append((last, []))
-                    last = ''
-                new_lst.append((cn, cc))
-        if last:
-            new_lst.append((last, []))
-        return new_lst
-
-    def prune_tree(self, tree):
-        name, children = tree
-        if self.coalesce_tokens:
-            children = self.coalesce(children)
-        if name in self.tokens:
-            return (name, [(tree_to_string(tree), [])])
-        else:
-            return (name, [self.prune_tree(c) for c in children])
-
-    def __init__(self, grammar, **kwargs):
-        self._start_symbol = kwargs.get('start_symbol', START_SYMBOL)
-        self.log = kwargs.get('log', False)
-        self.tokens = kwargs.get('tokens', set())
-        self.coalesce_tokens = kwargs.get('coalesce', True)
-        self.cgrammar = single_char_tokens(grammar)
-        # we do not require a single rule for the start symbol
-        if len(grammar.get(self._start_symbol, [])) != 1:
-            self.cgrammar['<>'] = [[self._start_symbol]]
-
-    def prune_tree(self, tree):
-        name, children = tree
-        if name == '<>':
-            assert len(children) == 1
-            return self.prune_tree(children[0])
-        if self.coalesce_tokens:
-            children = self.coalesce(children)
-        if name in self.tokens:
-            return (name, [(tree_to_string(tree), [])])
-        else:
-            return (name, [self.prune_tree(c) for c in children])
-*/
 /*
 class Column:
     def __str__(self):
@@ -221,16 +187,55 @@ class State(Item):
         return TState(self.name, self.expr, self.dot - 1, self.s_col, self.e_col)
 */
 /*
+def fixpoint(f):
+    def helper(arg):
+        while True:
+            sarg = str(arg)
+            arg_ = f(arg)
+            if str(arg_) == sarg:
+                return arg
+            arg = arg_
+
+    return helper
+
+def rules(grammar):
+    return [(key, choice)
+            for key, choices in grammar.items()
+            for choice in choices]
+
+def terminals(grammar):
+    return set(token
+               for key, choice in rules(grammar)
+               for token in choice if token not in grammar)
+
+def nullable_expr(expr, nullables):
+    return all(token in nullables for token in expr)
+
+def nullable(grammar):
+    productions = rules(grammar)
+
+    @fixpoint
+    def nullable_(nullables):
+        for A, expr in productions:
+            if nullable_expr(expr, nullables):
+                nullables |= {A}
+        return (nullables)
+
+    return nullable_({EPSILON})
+*/
+
+
+/*
 class EarleyParser(Parser):
     def chart_parse(self, words, start):
-        alt = tuple(*self.cgrammar[start])
+        alt = tuple(*self.grammar[start])
         chart = [Column(i, tok) for i, tok in enumerate([None, *words])]
         chart[0].add(State(start, alt, 0, chart[0]))
         return self.fill_chart(chart)
 
 
     def predict(self, col, sym, state):
-        for alt in self.cgrammar[sym]:
+        for alt in self.grammar[sym]:
             col.add(State(sym, tuple(alt), 0, col))
 
 
@@ -257,7 +262,7 @@ class EarleyParser(Parser):
                     self.complete(col, state)
                 else:
                     sym = state.at_dot()
-                    if sym in self.cgrammar:
+                    if sym in self.grammar:
                         self.predict(col, sym, state)
                     else:
                         if i + 1 >= len(chart):
@@ -287,7 +292,7 @@ class EarleyParser(Parser):
 
         forest = self.parse_forest(self.table, start)
         for tree in self.extract_trees(forest):
-            yield self.prune_tree(tree)
+            yield tree
 
     def parse_paths(self, named_expr, chart, frm, til):
         def paths(state, start, k, e):
@@ -299,7 +304,7 @@ class EarleyParser(Parser):
 
         *expr, var = named_expr
         starts = None
-        if var not in self.cgrammar:
+        if var not in self.grammar:
             starts = ([(var, til - len(var),
                         't')] if til > 0 and chart[til].letter == var else [])
         else:
@@ -339,10 +344,10 @@ class EarleyParser(Parser):
 
     def __init__(self, grammar, **kwargs):
         super().__init__(grammar, **kwargs)
-        self.epsilon = nullable(self.cgrammar)
+        self.epsilon = nullable(self.grammar)
 
     def predict(self, col, sym, state):
-        for alt in self.cgrammar[sym]:
+        for alt in self.grammar[sym]:
             col.add(State(sym, tuple(alt), 0, col))
         if sym in self.epsilon:
             col.add(state.advance())
@@ -435,7 +440,7 @@ class LeoParser(EarleyParser):
         self.r_table = self.rearrange(self.table)
         forest = self.extract_trees(self.parse_forest(self.table, start))
         for tree in forest:
-            yield self.prune_tree(tree)
+            yield tree
 
     def parse_forest(self, chart, state):
         if isinstance(state, TState):
@@ -462,7 +467,7 @@ class IterativeEarleyParser(LeoParser):
             *expr, var = named_expr
 
             starts = None
-            if var not in self.cgrammar:
+            if var not in self.grammar:
                 starts = ([(var, til - len(var),
                         't')] if til > 0 and chart[til].letter == var else [])
             else:
