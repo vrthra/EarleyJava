@@ -24,6 +24,24 @@ class Grammar extends HashMap<String, GDef> {
     }
 }
 
+class VKC {
+    SK sk;
+    List<Column> chart;
+    public VKC(SK sk, List<Column> chart) {
+        this.sk = sk;
+        this.chart = chart;
+    }
+}
+
+class NamedForest {
+    private String name;
+    private ArrayList<VKC> vkc;
+    public NamedForest(String name, ArrayList<VKC> vkc) {
+        this.name = name;
+        this.vkc = vkc;
+    }
+}
+
 class SIInfo {
     State state;
     int index;
@@ -474,6 +492,35 @@ class EarleyParser extends Parser {
         //return [p for s, start, k in starts for p in _paths(frm, chart, s, start, k, named_expr.expr)];
     }
 
+    NamedForest parse_forest(List<Column> chart, State state) {
+        ArrayList<ArrayList<SK>> pathexprs = null;
+        if (!state.expr.isEmpty()) {
+            pathexprs = this.parse_paths(state.expr, chart, state.s_col.index, state.e_col.index);
+        } else {
+            pathexprs = new ArrayList<ArrayList<SK>>();
+        }
+
+        ArrayList<VKC> vkc = new ArrayList<VKC>();
+        for (ArrayList<SK> pathexpr: pathexprs) {
+            for (int i = pathexpr.size(); i != 0; i--) {
+                SK vk = pathexpr.get(i - 1);
+                vkc.add(new VKC(vk, chart));
+            }
+        }
+        return new NamedForest(state.name, vkc);
+        /*return state.name, [[(v, k, chart) for v, k in reversed(pathexpr)]
+                            for pathexpr in pathexprs];*/
+    }
+
+    NamedForest forest(State s, char kind, List<Column> chart) {
+        if (kind == 'n') {
+            return this.parse_forest(chart, s);
+        } else {
+             return new NamedForest(s.name, new ArrayList<VKC>());
+         }
+    }
+
+
 /*
 
     def parse(self, text, start_symbol):
@@ -487,14 +534,6 @@ class EarleyParser extends Parser {
         for tree in self.extract_trees(forest):
             yield tree
 
-    def forest(self, s, kind, chart):
-        return self.parse_forest(chart, s) if kind == 'n' else (s, [])
-
-    def parse_forest(self, chart, state):
-        pathexprs = self.parse_paths(state.expr, chart, state.s_col.index,
-                                     state.e_col.index) if state.expr else []
-        return state.name, [[(v, k, chart) for v, k in reversed(pathexpr)]
-                            for pathexpr in pathexprs]
 
     def extract_a_tree(self, forest_node):
         name, paths = forest_node
