@@ -24,6 +24,39 @@ class Grammar extends HashMap<String, GDef> {
     }
 }
 
+class SIInfo {
+    State state;
+    int index;
+    char c;
+    public SIInfo(State state, int index, char c) {
+        this.state = state;
+        this.index = index;
+        this.c = c;
+    }
+}
+
+class NamedRule {
+    GRule expr;
+    String var;
+    public NamedRule(GRule expr, String var) {
+        this.expr = expr;
+        this.var = var;
+    }
+
+    public boolean isEmpty() {
+        return this.expr.isEmpty();
+    }
+}
+
+class SK {
+    State s;
+    char k;
+    SK(State s, char k) {
+        this.s = s;
+        this.k = k;
+    }
+}
+
 class G {
     Grammar grammar;
     Map<String, Double> min_len;
@@ -391,6 +424,56 @@ class EarleyParser extends Parser {
         }
         return new ParseForest(-1, states);
     }
+
+    ArrayList<ArrayList<SK>> _paths(int frm, List<Column> chart, State state, int start, char k, GRule e) {
+        if (e.isEmpty()) {
+            ArrayList<ArrayList<SK>> sk = new ArrayList<ArrayList<SK>>();
+            if (start == frm) {
+                ArrayList<SK> sk1 = new ArrayList<SK>();
+                sk1.add(new SK(state, k));
+                sk.add(sk1);
+                return sk;
+            } else {
+                return sk;
+            }
+        } else {
+            ArrayList<ArrayList<SK>> sk = new ArrayList<ArrayList<SK>>();
+            for (ArrayList<SK> r : this.parse_paths(e, chart, frm, start)) {
+                ArrayList<SK> sk1 = new ArrayList<SK>();
+                sk1.add(new SK(state, k));
+                sk1.addAll(r);
+                sk.add(sk1);
+            }
+            return sk;
+            // return [[(state, k)] + r for r in self.parse_paths(e, chart, frm, start)];
+        }
+    }
+
+    ArrayList<ArrayList<SK>> parse_paths(GRule named_expr, List<Column> chart, int frm, int til) {
+        ArrayList<SIInfo> starts = new ArrayList<SIInfo>();
+        String var = named_expr.get(named_expr.size()-1);
+        GRule expr = (GRule) named_expr.subList(0, named_expr.size() - 2);
+        if (!this.grammar.containsKey(var)) {
+            if (til > 0 && chart.get(til).letter.equals(var)) {
+                starts.add(new SIInfo(new State(null, expr, 0, null, null), til - var.length(), 't'));
+            }
+        } else {
+            for (State s: chart.get(til).states) {
+                if (s.finished() && s.name.equals(var)) {
+                    starts.add(new SIInfo(s, s.s_col.index, 'n'));
+                }
+            }
+        }
+        ArrayList<ArrayList<SK>> result = new ArrayList<ArrayList<SK>>();
+        for (SIInfo sii : starts) {
+            for (ArrayList<SK> pth : this._paths(frm, chart, sii.state, sii.index, sii.c, expr)) {
+                result.add(pth);
+            }
+        }
+        return result;
+        //return [p for s, start, k in starts for p in _paths(frm, chart, s, start, k, named_expr.expr)];
+    }
+
 /*
 
     def parse(self, text, start_symbol):
@@ -403,25 +486,6 @@ class EarleyParser extends Parser {
         forest = self.parse_forest(self.table, start)
         for tree in self.extract_trees(forest):
             yield tree
-
-    def parse_paths(self, named_expr, chart, frm, til):
-        def paths(state, start, k, e):
-            if not e:
-                return [[(state, k)]] if start == frm else []
-            else:
-                return [[(state, k)] + r
-                        for r in self.parse_paths(e, chart, frm, start)]
-
-        *expr, var = named_expr
-        starts = None
-        if var not in self.grammar:
-            starts = ([(var, til - len(var),
-                        't')] if til > 0 and chart[til].letter == var else [])
-        else:
-            starts = [(s, s.s_col.index, 'n') for s in chart[til].states
-                      if s.finished() and s.name == var]
-
-        return [p for s, start, k in starts for p in paths(s, start, k, expr)]
 
     def forest(self, s, kind, chart):
         return self.parse_forest(chart, s) if kind == 'n' else (s, [])
