@@ -64,8 +64,8 @@ class ParseForest implements Iterable<ParseTree> {
 }
 
 interface ParserI {
-    ParseForest parse_prefix(String text);
-    Iterator<ParseTree> parse(String text) throws ParseException;
+    ParseForest parse_prefix(String text, String start_symbol);
+    Iterator<ParseTree> parse(String text, String start_symbol) throws ParseException;
 }
 
 abstract class Parser implements ParserI {
@@ -88,89 +88,81 @@ abstract class Parser implements ParserI {
         }
     }
 
-    @Override
     public Iterator<ParseTree> parse(String text) throws ParseException {
-        ParseForest p = this.parse_prefix(text);
+        return this.parse(text, this.start_symbol);
+    }
+
+    @Override
+    public Iterator<ParseTree> parse(String text, String start_symbol) throws ParseException {
+        ParseForest p = this.parse_prefix(text, start_symbol);
 
         if (p.cursor < text.length()) {
             throw new ParseException("Syntax Error at: " + p.cursor);
         }
         return p.iterator();
     }
-
-    public Iterator<ParseTree> parse_on(String text, String start_symbol) throws ParseException {
-        String old_start = this.start_symbol;
-        try {
-            this.start_symbol = start_symbol;
-            return this.parse(text);
-        } finally {
-            // TODO. This is not what we want. We want this entire parse to happen
-            // on start_symbol, and at the end reset the object back to old_start
-            this.start_symbol = old_start;
-        }
-    }
 }
 
+class Item {
+    String name;
+    GRule expr;
+    int dot;
+    Item(String name, GRule expr, int dot) {
+        this.name = name;
+        this.expr = expr;
+        this.dot = dot;
+    }
+
+    public boolean finished() {
+        return this.dot >= this.expr.size();
+    }
+
+    Item advance() {
+        return new Item(this.name, this.expr, this.dot + 1);
+    }
+
+    public boolean at_dot() {
+        if (this.dot < this.expr.size()) {
+            return this.expr.get(this.dot) != null;
+        } else {
+            return false;
+        }
+    }
+
+}
+
+class State extends Item {
+    public Column s_col;
+    public Column e_col;
+    State(String name, GRule expr, int dot, Column s_col, Column e_col) {
+        super(name, expr, dot);
+        this.s_col = s_col;
+        this.e_col = e_col;
+    }
+
+    public String toString() {
+        return "";
+        /*
+         * def idx(var): return var.index if var else -1
+         * 
+         * return self.name + ':= ' + ' '.join([ str(p) for p in [*self.expr[:self.dot],
+         * '|', *self.expr[self.dot:]] ]) + "(%d,%d)" % (idx(self.s_col),
+         * idx(self.e_col))
+         */
+    }
+
+    State copy() {
+        return new State(this.name, this.expr, this.dot, this.s_col, this.e_col);
+    }
+
+    State advance() {
+        return new State(this.name, this.expr, this.dot + 1, this.s_col, null);
+    }
+
+    State back() {
+        return new TState(this.name, this.expr, this.dot - 1, this.s_col, this.e_col);
+    }
 /*
-class Column:
-    def __str__(self):
-        return "%s chart[%d]\n%s" % (self.letter, self.index, "\n".join(
-            str(state) for state in self.states if state.finished()))
-
-    def add(self, state):
-        if state in self._unique:
-            return self._unique[state]
-        self._unique[state] = state
-        self.states.append(state)
-        state.e_col = self
-        return self._unique[state]
-
-    def __init__(self, index, letter):
-        self.index, self.letter = index, letter
-        self.states, self._unique, self.transitives = [], {}, {}
-
-    def add_transitive(self, key, state):
-        assert key not in self.transitives
-        self.transitives[key] = state
-        return self.transitives[key]
-
-    def add_transitive(self, key, state):
-        assert key not in self.transitives
-        self.transitives[key] = TState(state.name, state.expr, state.dot,
-                                       state.s_col, state.e_col)
-        return self.transitives[key]
-
-
-class Item:
-    def __init__(self, name, expr, dot):
-        self.name, self.expr, self.dot = name, expr, dot
-
-    def finished(self):
-        return self.dot >= len(self.expr)
-
-    def advance(self):
-        return Item(self.name, self.expr, self.dot + 1)
-
-    def at_dot(self):
-        return self.expr[self.dot] if self.dot < len(self.expr) else None
-
-class State(Item):
-    def __init__(self, name, expr, dot, s_col, e_col=None):
-        super().__init__(name, expr, dot)
-        self.s_col, self.e_col = s_col, e_col
-
-    def __str__(self):
-        def idx(var):
-            return var.index if var else -1
-
-        return self.name + ':= ' + ' '.join([
-            str(p)
-            for p in [*self.expr[:self.dot], '|', *self.expr[self.dot:]]
-        ]) + "(%d,%d)" % (idx(self.s_col), idx(self.e_col))
-
-    def copy(self):
-        return State(self.name, self.expr, self.dot, self.s_col, self.e_col)
-
     def _t(self):
         return (self.name, self.expr, self.dot, self.s_col.index)
 
@@ -179,13 +171,59 @@ class State(Item):
 
     def __eq__(self, other):
         return self._t() == other._t()
-
-    def advance(self):
-        return State(self.name, self.expr, self.dot + 1, self.s_col)
-
-    def back(self):
-        return TState(self.name, self.expr, self.dot - 1, self.s_col, self.e_col)
 */
+}
+
+class TState extends State {
+    public TState(String name, GRule expr, int dot, Column s_col, Column e_col) {
+        super(name, expr, dot, s_col, e_col);
+    }
+    TState copy() {
+        return new TState(this.name, this.expr, this.dot, this.s_col, this.e_col);
+    }
+}
+
+
+class Column {
+    int index;
+    String letter;
+    ArrayList<State> states = new ArrayList<State>();
+    HashMap<String, State> unique = new HashMap<String, State>();
+    HashMap<String, State> transitives = new HashMap<String, State>();
+
+    Column(int index, String letter) {
+        this.index = index;
+        this.letter = letter;
+    }
+
+    public String toString() {
+        ArrayList<String> finished_states = new ArrayList<String>();
+        for (State s: this.states) {
+            if (s.finished()) {
+                finished_states.add(s.toString());
+            }
+        }
+        String finished = String.join("\n", finished_states);
+        return String.format("%s chart[%d]\n%s", this.letter, this.index, finished);
+    }
+
+    State add(State state) {
+        String s_state = state.toString();
+        if (this.unique.containsKey(s_state) ) {
+            return this.unique.get(s_state);
+        }
+        this.unique.put(s_state, state);
+        this.states.add(state);
+        state.e_col = this;
+        return this.unique.get(s_state);
+    }
+    State add_transitive(String key, State state) {
+        // assert key not in self.transitives
+        this.transitives.put(key, new TState(state.name, state.expr, state.dot, state.s_col, state.e_col));
+        return this.transitives.get(key);
+    }
+}
+
 /*
 def fixpoint(f):
     def helper(arg):
@@ -273,18 +311,18 @@ class EarleyParser(Parser):
         return chart
 
 
-    def parse_prefix(self, text):
-        self.table = self.chart_parse(text, self.start_symbol())
+    def parse_prefix(self, text, start_symbol):
+        self.table = self.chart_parse(text, start_symbol)
         for col in reversed(self.table):
             states = [
-                st for st in col.states if st.name == self.start_symbol()
+                st for st in col.states if st.name == start_symbol
             ]
             if states:
                 return col.index, states
         return -1, []
 
-    def parse(self, text):
-        cursor, states = self.parse_prefix(text)
+    def parse(self, text, start_symbol):
+        cursor, states = self.parse_prefix(text, start_symbol)
         start = next((s for s in states if s.finished()), None)
 
         if cursor < len(text) or not start:
@@ -352,11 +390,6 @@ class EarleyParser(Parser):
         if sym in self.epsilon:
             col.add(state.advance())
             
-*/
-/*
-class TState(State):
-    def copy(self):
-        return TState(self.name, self.expr, self.dot, self.s_col, self.e_col)
 */
 /*
 class LeoParser(EarleyParser):
@@ -431,8 +464,8 @@ class LeoParser(EarleyParser):
                 f_table[s.s_col.index].states.append(s)
         return f_table
 
-    def parse(self, text):
-        cursor, states = self.parse_prefix(text)
+    def parse(self, text, start_symbol):
+        cursor, states = self.parse_prefix(text, start_symbol)
         start = next((s for s in states if s.finished()), None)
         if cursor < len(text) or not start:
             raise SyntaxError("at " + repr(text[cursor:]))
