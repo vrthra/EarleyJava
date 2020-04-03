@@ -288,22 +288,25 @@ class Column {
 
 /*
 class EarleyParser(Parser):
+    def __init__(self, grammar, **kwargs):
+        super().__init__(grammar, **kwargs)
+        self.epsilon = nullable(self.grammar)
+
     def chart_parse(self, words, start):
         alt = tuple(*self.grammar[start])
         chart = [Column(i, tok) for i, tok in enumerate([None, *words])]
         chart[0].add(State(start, alt, 0, chart[0]))
         return self.fill_chart(chart)
 
-
     def predict(self, col, sym, state):
         for alt in self.grammar[sym]:
             col.add(State(sym, tuple(alt), 0, col))
-
+        if sym in self.epsilon:
+            col.add(state.advance())
 
     def scan(self, col, state, letter):
         if letter == col.letter:
             col.add(state.advance())
-
 
     def complete(self, col, state):
         return self.earley_complete(col, state)
@@ -402,16 +405,6 @@ class EarleyParser(Parser):
             ptrees = [self.extract_trees(self.forest(*p)) for p in path]
             for p in zip(*ptrees):
                 yield (name, p)
-
-    def __init__(self, grammar, **kwargs):
-        super().__init__(grammar, **kwargs)
-        self.epsilon = nullable(self.grammar)
-
-    def predict(self, col, sym, state):
-        for alt in self.grammar[sym]:
-            col.add(State(sym, tuple(alt), 0, col))
-        if sym in self.epsilon:
-            col.add(state.advance())
             
 */
 /*
