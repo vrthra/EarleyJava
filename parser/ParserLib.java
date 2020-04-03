@@ -1,61 +1,41 @@
-// Parser.py
-/*
-def single_char_tokens(grammar):
-    g_ = {}
-    for key in grammar:
-        rules_ = []
-        for rule in grammar[key]:
-            rule_ = []
-            for token in rule:
-                if token in grammar:
-                    rule_.append(token)
-                else:
-                    rule_.extend(token)
-            rules_.append(rule_)
-        g_[key] = rules_
-    return g_
+package parser;
+import java.util.HashMap;
+import java.util.ArrayList;
 
-def canonical(grammar):
-    def split(expansion):
-        if isinstance(expansion, tuple):
-            expansion = expansion[0]
+class GRule extends ArrayList<String> { public GRule(){} }
+class GDef extends ArrayList<GRule> { public GDef(){} }
+class Grammar extends HashMap<String, GDef>{ public Grammar(){}}
 
-        return [token for token in re.split(
-            RE_NONTERMINAL, expansion) if token]
-
-    return {
-        k: [split(expression) for expression in alternatives]
-        for k, alternatives in grammar.items()
+public class ParserLib {
+    Grammar single_char_tokens(Grammar grammar) {
+        Grammar g_ = new Grammar();
+        for (String key : grammar.keySet()) {
+            GDef rules_ = new GDef();
+            for (GRule rule : grammar.get(key)) {
+                GRule rule_ = new GRule();
+                for (String token : rule) {
+                    if (grammar.keySet().contains(token)) {
+                        rule_.add(token);
+                    } else {
+                        for (String c : token.split("")) {
+                            rule_.add(c);
+                        }
+                    }
+                }
+                rules_.add(rule_);
+            }
+            g_.put(key, rules_);
+        }
+        return g_;
     }
 
-def recurse_grammar(grammar, key, order):
-    rules = sorted(grammar[key])
-    old_len = len(order)
-    for rule in rules:
-        for token in rule:
-            if token not in grammar: continue
-            if token not in order:
-                order.append(token)
-    new = order[old_len:]
-    for ckey in new:
-        recurse_grammar(grammar, ckey, order)
-
-def show_grammar(grammar, start_symbol=START_SYMBOL):
-    order = [start_symbol]
-    recurse_grammar(grammar, start_symbol, order)
-    return {k: sorted(grammar[k]) for k in order}
-
-def non_canonical(grammar):
-    new_grammar = {}
-    for k in grammar:
-        rules = grammar[k]
-        new_rules = []
-        for rule in rules:
-            new_rules.append(''.join(rule))
-        new_grammar[k] = new_rules
-    return new_grammar
-    
-    def fixpoint(f):
+    public static void main(String[] args) {
+        System.out.println("Hello");
+    }
+}
+// Parser.py
+/*
+def fixpoint(f):
     def helper(arg):
         while True:
             sarg = str(arg)
@@ -96,7 +76,7 @@ def nullable(grammar):
 /*
 class Parser:
     def grammar(self):
-        return self._grammar
+        return self.cgrammar
 
     def start_symbol(self):
         return self._start_symbol
@@ -123,7 +103,7 @@ class Parser:
         last = ''
         new_lst = []
         for cn, cc in children:
-            if cn not in self._grammar:
+            if cn not in self.cgrammar:
                 last += cn
             else:
                 if last:
@@ -148,13 +128,7 @@ class Parser:
         self.log = kwargs.get('log', False)
         self.tokens = kwargs.get('tokens', set())
         self.coalesce_tokens = kwargs.get('coalesce', True)
-        canonical_grammar = kwargs.get('canonical', False)
-        if canonical_grammar:
-            self.cgrammar = single_char_tokens(grammar)
-            self._grammar = non_canonical(grammar)
-        else:
-            self._grammar = dict(grammar)
-            self.cgrammar = single_char_tokens(canonical(grammar))
+        self.cgrammar = single_char_tokens(grammar)
         # we do not require a single rule for the start symbol
         if len(grammar.get(self._start_symbol, [])) != 1:
             self.cgrammar['<>'] = [[self._start_symbol]]
