@@ -114,6 +114,10 @@ class ParseTree {
 
 class ParseForest implements Iterable<ParseTree> {
     int cursor;
+    public ParseForest(int cursor, List<State> p) {
+        // TODO
+        this.cursor = cursor;
+    }
 
     @Override
     public Iterator<ParseTree> iterator() {
@@ -285,67 +289,109 @@ class Column {
         return this.transitives.get(key);
     }
 }
+class EarleyParser extends Parser {
+    List<String> epsilon;
+    List<Column> table;
+    private boolean log = false;
+    public EarleyParser(Grammar grammar) {
+        super(grammar);
+        G g = new G(grammar);
+        this.epsilon = g.nullable();
+    }
 
+    void predict(Column col, String sym,State state) {
+        for (GRule alt : this.grammar.get(sym)) {
+            col.add(new State(sym, alt, 0, col, null));
+        }
+        if (this.epsilon.contains(sym)) {
+            col.add(state.advance());
+        }
+    }
+
+    void scan(Column col, State state, String letter) {
+        if (letter == col.letter) {
+            col.add(state.advance());
+        }
+    }
+
+    void complete(Column col, State state) {
+        this.earley_complete(col, state);
+    }
+
+    void earley_complete(Column col, State state) {
+        List<State> parent_states = new ArrayList<State>();
+        for (State st: state.s_col.states) {
+            if (st.at_dot() == state.name) {
+                parent_states.add(st);
+            }
+        }
+        for (State st : parent_states) {
+            col.add(st.advance());
+        }
+    }
+
+    List<Column> chart_parse(List<String> words, String start) {
+        GRule alt = this.grammar.get(start).get(0);
+        List<Column> chart = new ArrayList<Column>();
+        chart.add(new Column(0, null));
+        for (int i = 1; i < (words.size() + 1); i++) {
+            String tok = words.get(i - 1);
+            chart.add(new Column(i, tok));
+        }
+        State s = new State(start, alt, 0, chart.get(0), null);
+        chart.get(0).add(s);
+        return this.fill_chart(chart);
+    }
+
+    List<Column> fill_chart(List<Column> chart) {
+        for (int i = 0; i < chart.size(); i++) {
+            Column col = chart.get(i);
+            for (State state: col.states) {
+                if (state.finished()) {
+                    this.complete(col, state);
+                } else {
+                    String sym = state.at_dot();
+                    if (this.grammar.containsKey(sym)) {
+                        this.predict(col, sym, state);
+                    } else {
+                        if (i + 1 >= chart.size()) {
+                            continue;
+                        }
+                        this.scan(chart.get(i + 1), state, sym);
+                    }
+                }
+            }
+
+            if (this.log) {
+                out(col.toString() + "\n");
+            }
+        }
+        return chart;
+    }
+
+
+    private void out(String var) {
+        System.out.println(var);
+    }
+
+    @Override
+    public ParseForest parse_prefix(String text, String start_symbol) {
+        this.table = this.chart_parse(Arrays.asList(text.split("")), start_symbol);
+        List<State> states = new ArrayList<State>();
+        for (int i = this.table.size(); i != 0; i--) {
+            Column col = this.table.get(i-1);
+            for (State st : col.states) {
+                if (st.name.equals(start_symbol)) {
+                    states.add(st);
+                }
+            }
+            if (states.size() != 0) {
+                return new ParseForest(col.index, states);
+            }
+        }
+        return new ParseForest(-1, states);
+    }
 /*
-class EarleyParser(Parser):
-    def __init__(self, grammar, **kwargs):
-        super().__init__(grammar, **kwargs)
-        self.epsilon = nullable(self.grammar)
-
-    def chart_parse(self, words, start):
-        alt = tuple(*self.grammar[start])
-        chart = [Column(i, tok) for i, tok in enumerate([None, *words])]
-        chart[0].add(State(start, alt, 0, chart[0]))
-        return self.fill_chart(chart)
-
-    def predict(self, col, sym, state):
-        for alt in self.grammar[sym]:
-            col.add(State(sym, tuple(alt), 0, col))
-        if sym in self.epsilon:
-            col.add(state.advance())
-
-    def scan(self, col, state, letter):
-        if letter == col.letter:
-            col.add(state.advance())
-
-    def complete(self, col, state):
-        return self.earley_complete(col, state)
-
-    def earley_complete(self, col, state):
-        parent_states = [
-            st for st in state.s_col.states if st.at_dot() == state.name
-        ]
-        for st in parent_states:
-            col.add(st.advance())
-
-
-    def fill_chart(self, chart):
-        for i, col in enumerate(chart):
-            for state in col.states:
-                if state.finished():
-                    self.complete(col, state)
-                else:
-                    sym = state.at_dot()
-                    if sym in self.grammar:
-                        self.predict(col, sym, state)
-                    else:
-                        if i + 1 >= len(chart):
-                            continue
-                        self.scan(chart[i + 1], state, sym)
-            if self.log:
-                print(col, '\n')
-        return chart
-
-
-    def parse_prefix(self, text, start_symbol):
-        self.table = self.chart_parse(text, start_symbol)
-        for col in reversed(self.table):
-            states = [
-                st for st in col.states if st.name == start_symbol
-            ]
-            if states:
-                return col.index, states
-        return -1, []
 
     def parse(self, text, start_symbol):
         cursor, states = self.parse_prefix(text, start_symbol)
@@ -377,7 +423,6 @@ class EarleyParser(Parser):
 
         return [p for s, start, k in starts for p in paths(s, start, k, expr)]
 
-
     def forest(self, s, kind, chart):
         return self.parse_forest(chart, s) if kind == 'n' else (s, [])
 
@@ -405,8 +450,9 @@ class EarleyParser(Parser):
             ptrees = [self.extract_trees(self.forest(*p)) for p in path]
             for p in zip(*ptrees):
                 yield (name, p)
-            
 */
+}
+
 /*
 class LeoParser(EarleyParser):
     def complete(self, col, state):
