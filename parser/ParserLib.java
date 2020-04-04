@@ -62,20 +62,6 @@ class SIInfo {
     }
 }
 
-class NamedRule {
-    GRule expr;
-    String var;
-    public NamedRule(GRule expr, String var) {
-        this.expr = expr;
-        this.var = var;
-    }
-
-    public boolean isEmpty() {
-        return this.expr.isEmpty();
-    }
-}
-
-
 class G {
     Grammar grammar;
     Map<String, Double> min_len;
