@@ -564,10 +564,6 @@ class EarleyParser extends Parser {
         return this.extract_trees(forest);
     }
 /*
-
-
-
-
     def extract_trees(self, forest_node):
         name, paths = forest_node
         if not paths:
@@ -778,6 +774,7 @@ public class ParserLib {
     }
 
     public void show_tree(ParseTree result) {
+        System.out.println("Dummy");
     }
 
     public ParseTree parse_text(String text_file) throws ParseException, IOException {
