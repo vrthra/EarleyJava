@@ -116,17 +116,14 @@ class G {
         return min_len;
     }
 
-}
-
-public class ParserLib {
-    static Grammar single_char_tokens(Grammar grammar) {
+    Grammar single_char_tokens() {
         Grammar g_ = new Grammar();
-        for (String key : grammar.keySet()) {
+        for (String key : this.grammar.keySet()) {
             GDef rules_ = new GDef();
-            for (GRule rule : grammar.get(key)) {
+            for (GRule rule : this.grammar.get(key)) {
                 GRule rule_ = new GRule();
                 for (String token : rule) {
-                    if (grammar.keySet().contains(token)) {
+                    if (this.grammar.keySet().contains(token)) {
                         rule_.add(token);
                     } else {
                         for (String c : token.split("")) {
@@ -139,10 +136,6 @@ public class ParserLib {
             g_.put(key, rules_);
         }
         return g_;
-    }
-
-    public static void main(String[] args) {
-        System.out.println("Hello");
     }
 }
 // Parser.py
@@ -185,7 +178,7 @@ abstract class Parser implements ParserI {
     }
     Parser(Grammar grammar, String start_symbol) {
         this.start_symbol = start_symbol;
-        this.grammar = ParserLib.single_char_tokens(grammar);
+        this.grammar = new G(grammar).single_char_tokens();
         // we do not require a single rule for the start symbol
         int start_rules_len = grammar.get(start_symbol).size();
         if (start_rules_len != 1) {
@@ -738,3 +731,21 @@ class IterativeEarleyParser(LeoParser):
         tree, *_ =  IterativeEarleyParser(grammar, canonical=True).parse(text)
         assert text == tree_to_string(tree)
 */
+
+public class ParserLib {
+    public ParserLib(String grammar_file) {
+    }
+
+    private void show_tree(ParseTree result) {
+    }
+
+    private ParseTree parse_text(String string) {
+        return null;
+    }
+
+    public static void main(String[] args) {
+        ParserLib pl = new ParserLib(args[0]);
+        ParseTree result = pl.parse_text(args[1]);
+        pl.show_tree(result);
+    }
+}
