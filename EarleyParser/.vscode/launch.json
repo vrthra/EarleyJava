@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug (Launch) - Current File",
+            "request": "launch",
+            "mainClass": "${file}",
+            "args": "grammar.json myfile.txt"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-App<EarleyParser>",
+            "request": "launch",
+            "mainClass": "parser.App",
+            "projectName": "EarleyParser",
+            "args": "grammar.json myfile.txt"
+        }
+    ]
+}
