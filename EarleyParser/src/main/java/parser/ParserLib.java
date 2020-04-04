@@ -784,7 +784,7 @@ public class ParserLib {
         EarleyParser ep = new EarleyParser(this.grammar);
         Iterator<ParseTree> result = ep.parse(content);
         if (result.hasNext()) {
-            result.next();
+            return result.next();
         }
         return null;
     }
