@@ -41,10 +41,10 @@ class SK {
     }
 }
 
-class VKC {
+class TPath {
     SK sk;
     List<Column> chart;
-    public VKC(SK sk, List<Column> chart) {
+    public TPath(SK sk, List<Column> chart) {
         this.sk = sk;
         this.chart = chart;
     }
@@ -52,10 +52,10 @@ class VKC {
 
 class NamedForest {
     String name;
-    ArrayList<ArrayList<VKC>> paths;
-    public NamedForest(String name, ArrayList<ArrayList<VKC>> vkcs) {
+    ArrayList<ArrayList<TPath>> paths;
+    public NamedForest(String name, ArrayList<ArrayList<TPath>> paths) {
         this.name = name;
-        this.paths = vkcs;
+        this.paths = paths;
     }
 }
 
@@ -514,16 +514,16 @@ class EarleyParser extends Parser {
             pathexprs = new ArrayList<ArrayList<SK>>();
         }
 
-        ArrayList<ArrayList<VKC>> vkcs = new ArrayList<ArrayList<VKC>>();
+        ArrayList<ArrayList<TPath>> paths = new ArrayList<ArrayList<TPath>>();
         for (ArrayList<SK> pathexpr: pathexprs) {
-            ArrayList<VKC> vkc = new ArrayList<VKC>();
+            ArrayList<TPath> tpath = new ArrayList<TPath>();
             for (int i = pathexpr.size(); i != 0; i--) {
                 SK vk = pathexpr.get(i - 1);
-                vkc.add(new VKC(vk, chart));
+                tpath.add(new TPath(vk, chart));
             }
-            vkcs.add(vkc);
+            paths.add(tpath);
         }
-        return new NamedForest(state.name, vkcs);
+        return new NamedForest(state.name, paths);
         /*return state.name, [[(v, k, chart) for v, k in reversed(pathexpr)]
                             for pathexpr in pathexprs];*/
     }
@@ -532,7 +532,7 @@ class EarleyParser extends Parser {
         if (kind == 'n') {
             return this.parse_forest(chart, s);
         } else {
-             return new NamedForest(s.name, new ArrayList<ArrayList<VKC>>());
+             return new NamedForest(s.name, new ArrayList<ArrayList<TPath>>());
          }
     }
 
@@ -543,7 +543,7 @@ class EarleyParser extends Parser {
 
         ArrayList<ParseTree> lst = new ArrayList<ParseTree>();
 
-		for (VKC p : forest_node.paths.get(0)) {
+		for (TPath p : forest_node.paths.get(0)) {
             lst.add(this.extract_a_tree(this.forest(p.sk.s, p.sk.k, p.chart)));
         }
         //[self.extract_a_tree(self.forest(*p)) for p in paths[0]]
