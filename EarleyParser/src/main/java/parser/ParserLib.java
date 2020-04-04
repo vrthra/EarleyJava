@@ -6,6 +6,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.json.*;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -733,7 +742,32 @@ class IterativeEarleyParser(LeoParser):
 */
 
 public class ParserLib {
-    public ParserLib(String grammar_file) {
+    Grammar grammar;
+
+    public Grammar loadGrammar(JSONObject json_grammar) {
+        Grammar g = new Grammar();
+        for (String key : json_grammar.keySet()) {
+            JSONArray json_def = json_grammar.getJSONArray(key);
+            GDef gd = new GDef();
+            for (int i = 0; i < json_def.length(); i++) {
+                JSONArray json_rule = json_def.getJSONArray(i);
+                GRule gr = new GRule();
+                for (int j = 0; j < json_rule.length(); j++) {
+                    String token = json_rule.getString(j);
+                    gr.add(token);
+                }
+                gd.add(gr);
+            }
+            g.put(key, gd);
+        }
+        return g;
+    }
+
+    public ParserLib(String grammar_file) throws IOException {
+        Path path = FileSystems.getDefault().getPath(grammar_file);
+        String content = Files.readString(path, StandardCharsets.UTF_8);
+        JSONObject json_grammar = new JSONObject(content);
+        grammar = this.loadGrammar(json_grammar);
     }
 
     public void show_tree(ParseTree result) {

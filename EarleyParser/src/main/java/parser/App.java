@@ -1,14 +1,20 @@
 package parser;
 
+import java.io.IOException;
+
 /**
  * Earley Parser
  *
  */
-public class App 
-{
+public class App {
     public static void main(String[] args) {
-        ParserLib pl = new ParserLib(args[0]);
-        ParseTree result = pl.parse_text(args[1]);
-        pl.show_tree(result);
+        ParserLib pl;
+        try {
+            pl = new ParserLib(args[0]);
+            ParseTree result = pl.parse_text(args[1]);
+            pl.show_tree(result);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
