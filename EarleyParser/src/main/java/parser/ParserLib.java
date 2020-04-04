@@ -773,9 +773,12 @@ public class ParserLib {
     public void show_tree(ParseTree result) {
     }
 
-    public ParseTree parse_text(String text) throws ParseException {
+    public ParseTree parse_text(String text_file) throws ParseException, IOException {
+        Path path = FileSystems.getDefault().getPath(text_file);
+        String content = Files.readString(path, StandardCharsets.UTF_8);
+
         EarleyParser ep = new EarleyParser(this.grammar);
-        Iterator<ParseTree> result = ep.parse(text);
+        Iterator<ParseTree> result = ep.parse(content);
         if (result.hasNext()) {
             result.next();
         }
