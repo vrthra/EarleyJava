@@ -659,21 +659,31 @@ class IterativeEarleyParser(LeoParser):
         yield self.extract_a_tree(forest)
 
 if __name__ == "__main__":
-    test_cases = [
-        (A1_GRAMMAR, '1-2-3+4-5'),
-        # (A2_GRAMMAR, '1+2'),
-        # (A3_GRAMMAR, '1+2+3-6=6-1-2-3'),
-        # (LR_GRAMMAR, 'aaaaa'),
-        # (RR_GRAMMAR, 'aa'),
-        # (DIRECTLY_SELF_REFERRING, 'select a from a'),
-        # (INDIRECTLY_SELF_REFERRING, 'select a from a'),
-        # (RECURSION_GRAMMAR, 'AA'),
-        # (RECURSION_GRAMMAR, 'AAaaaa'),
-        # (RECURSION_GRAMMAR, 'BBccbb')
-    ]
-
-    for i, (grammar, text) in enumerate(test_cases):
-        print(i, text)
-        tree, *_ =  IterativeEarleyParser(grammar, canonical=True).parse(text)
-        assert text == tree_to_string(tree)
+    import sys
+    import json
+    with open(sys.argv[1]) as f:
+        grammar = json.load(fp=f)
+    with open(sys.argv[2]) as f:
+        text = f.read()
+    parser = EarleyParser(grammar, canonical=True)
+    results = parser.parse(text)
+    for r in results:
+        print(r)
+#    test_cases = [
+#        (A1_GRAMMAR, '1-2-3+4-5'),
+#        # (A2_GRAMMAR, '1+2'),
+#        # (A3_GRAMMAR, '1+2+3-6=6-1-2-3'),
+#        # (LR_GRAMMAR, 'aaaaa'),
+#        # (RR_GRAMMAR, 'aa'),
+#        # (DIRECTLY_SELF_REFERRING, 'select a from a'),
+#        # (INDIRECTLY_SELF_REFERRING, 'select a from a'),
+#        # (RECURSION_GRAMMAR, 'AA'),
+#        # (RECURSION_GRAMMAR, 'AAaaaa'),
+#        # (RECURSION_GRAMMAR, 'BBccbb')
+#    ]
+#
+#    for i, (grammar, text) in enumerate(test_cases):
+#        print(i, text)
+#        tree, *_ =  IterativeEarleyParser(grammar, canonical=True).parse(text)
+#        assert text == tree_to_string(tree)
 

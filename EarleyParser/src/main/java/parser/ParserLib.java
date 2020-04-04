@@ -10,7 +10,6 @@ import java.util.Set;
 import org.json.*;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -259,13 +258,13 @@ class State extends Item {
     public String toString() {
         ArrayList<String> lst = new ArrayList<String>();
         for (int i = 0; i < this.expr.size(); i++) {
-            lst.add(this.expr.get(i).toString());
             if (i == this.dot) {
                 lst.add("|");
             }
+            lst.add(this.expr.get(i).toString());
         }
         //lst = [ str(p) for p in [*this.expr[:this.dot], '|', *this.expr[this.dot:]] ]
-        return this.name + ":= " + String.join(" ", lst) + _idx(this.s_col) + "," + _idx(this.e_col);
+        return this.name + ":= " + String.join(" ", lst) + "(" + _idx(this.s_col) + "," + _idx(this.e_col) + ")";
     }
 
     State copy() {
@@ -300,12 +299,12 @@ class TState extends State {
 
 class Column {
     int index;
-    String letter;
+    char letter;
     ArrayList<State> states = new ArrayList<State>();
     HashMap<String, State> unique = new HashMap<String, State>();
     HashMap<String, State> transitives = new HashMap<String, State>();
 
-    Column(int index, String letter) {
+    Column(int index, char letter) {
         this.index = index;
         this.letter = letter;
     }
@@ -356,7 +355,7 @@ class EarleyParser extends Parser {
         }
     }
 
-    void scan(Column col, State state, String letter) {
+    void scan(Column col, State state, char letter) {
         if (letter == col.letter) {
             col.add(state.advance());
         }
@@ -378,12 +377,12 @@ class EarleyParser extends Parser {
         }
     }
 
-    List<Column> chart_parse(List<String> words, String start) {
+    List<Column> chart_parse(String letters, String start) {
         GRule alt = this.grammar.get(start).get(0);
         List<Column> chart = new ArrayList<Column>();
-        chart.add(new Column(0, null));
-        for (int i = 1; i < (words.size() + 1); i++) {
-            String tok = words.get(i - 1);
+        chart.add(new Column(0, '\0'));
+        for (int i = 1; i < (letters.length() + 1); i++) {
+            char tok = letters.charAt(i - 1);
             chart.add(new Column(i, tok));
         }
         State s = new State(start, alt, 0, chart.get(0), null);
@@ -405,7 +404,11 @@ class EarleyParser extends Parser {
                         if (i + 1 >= chart.size()) {
                             continue;
                         }
-                        this.scan(chart.get(i + 1), state, sym);
+                        if (sym.length() != 1) {
+                            throw new RuntimeException("Only single characters allowed");
+                        }
+                        char c = sym.charAt(0);
+                        this.scan(chart.get(i + 1), state, c);
                     }
                 }
             }
@@ -424,14 +427,14 @@ class EarleyParser extends Parser {
 
     @Override
     public ParseForest parse_prefix(String text, String start_symbol) {
-        String[] words = text.split("");
+        /*String[] words = text.split("");
         ArrayList<String> al = new ArrayList<String>();
         for (String w: words) {
             if (w.length() > 0) {
                 al.add(w);
             }
-        }
-        this.table = this.chart_parse(al, start_symbol);
+        }*/
+        this.table = this.chart_parse(text, start_symbol);
         List<State> states = new ArrayList<State>();
         for (int i = this.table.size(); i != 0; i--) {
             Column col = this.table.get(i-1);
@@ -476,7 +479,10 @@ class EarleyParser extends Parser {
         String var = named_expr.get(named_expr.size()-1);
         GRule expr = (GRule) named_expr.subList(0, named_expr.size() - 2);
         if (!this.grammar.containsKey(var)) {
-            if (til > 0 && chart.get(til).letter.equals(var)) {
+            if (var.length() != 1) {
+                throw new RuntimeException("Only single chars allowed.");
+            }
+            if (til > 0 && chart.get(til).letter == var.charAt(0)) {
                 starts.add(new SIInfo(new State(null, expr, 0, null, null), til - var.length(), 't'));
             }
         } else {
