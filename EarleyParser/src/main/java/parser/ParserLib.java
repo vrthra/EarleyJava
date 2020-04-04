@@ -773,8 +773,12 @@ public class ParserLib {
     public void show_tree(ParseTree result) {
     }
 
-    public ParseTree parse_text(String string) {
+    public ParseTree parse_text(String text) throws ParseException {
+        EarleyParser ep = new EarleyParser(this.grammar);
+        Iterator<ParseTree> result = ep.parse(text);
+        if (result.hasNext()) {
+            result.next();
+        }
         return null;
     }
-
 }
