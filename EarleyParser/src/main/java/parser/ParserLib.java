@@ -736,16 +736,11 @@ public class ParserLib {
     public ParserLib(String grammar_file) {
     }
 
-    private void show_tree(ParseTree result) {
+    public void show_tree(ParseTree result) {
     }
 
-    private ParseTree parse_text(String string) {
+    public ParseTree parse_text(String string) {
         return null;
     }
 
-    public static void main(String[] args) {
-        ParserLib pl = new ParserLib(args[0]);
-        ParseTree result = pl.parse_text(args[1]);
-        pl.show_tree(result);
-    }
 }
