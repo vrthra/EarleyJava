@@ -783,8 +783,15 @@ public class ParserLib {
         grammar = this.loadGrammar(json_grammar);
     }
 
+    public void _show_tree(ParseTree result, int indent) {
+        System.out.println(" ".repeat(indent) + result.name);
+        for (ParseTree p : result.children) {
+            this._show_tree(p, indent + 1);
+        }
+    }
+
     public void show_tree(ParseTree result) {
-        System.out.println("Dummy");
+        this._show_tree(result, 0);
     }
 
     public ParseTree parse_text(String text_file) throws ParseException, IOException {
