@@ -24,6 +24,15 @@ class Grammar extends HashMap<String, GDef> {
     }
 }
 
+class SK {
+    State s;
+    char k;
+    SK(State s, char k) {
+        this.s = s;
+        this.k = k;
+    }
+}
+
 class VKC {
     SK sk;
     List<Column> chart;
@@ -66,14 +75,6 @@ class NamedRule {
     }
 }
 
-class SK {
-    State s;
-    char k;
-    SK(State s, char k) {
-        this.s = s;
-        this.k = k;
-    }
-}
 
 class G {
     Grammar grammar;
