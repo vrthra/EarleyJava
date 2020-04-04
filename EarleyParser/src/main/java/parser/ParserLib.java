@@ -424,7 +424,14 @@ class EarleyParser extends Parser {
 
     @Override
     public ParseForest parse_prefix(String text, String start_symbol) {
-        this.table = this.chart_parse(Arrays.asList(text.split("")), start_symbol);
+        String[] words = text.split("");
+        ArrayList<String> al = new ArrayList<String>();
+        for (String w: words) {
+            if (w.length() > 0) {
+                al.add(w);
+            }
+        }
+        this.table = this.chart_parse(al, start_symbol);
         List<State> states = new ArrayList<State>();
         for (int i = this.table.size(); i != 0; i--) {
             Column col = this.table.get(i-1);
