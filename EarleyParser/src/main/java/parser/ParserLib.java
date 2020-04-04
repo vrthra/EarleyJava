@@ -235,7 +235,7 @@ class Item {
         if (this.dot < this.expr.size()) {
             return this.expr.get(this.dot);
         } else {
-            return null;
+            return "";
         }
     }
 
@@ -372,7 +372,7 @@ class EarleyParser extends Parser {
     void earley_complete(Column col, State state) {
         List<State> parent_states = new ArrayList<State>();
         for (State st: state.s_col.states) {
-            if (st.at_dot() == state.name) {
+            if (st.at_dot().equals(state.name)) {
                 parent_states.add(st);
             }
         }

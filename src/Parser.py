@@ -387,7 +387,8 @@ class EarleyParser(Parser):
     def chart_parse(self, words, start):
         alt = tuple(*self.cgrammar[start])
         chart = [Column(i, tok) for i, tok in enumerate([None, *words])]
-        chart[0].add(State(start, alt, 0, chart[0]))
+        s = State(start, alt, 0, chart[0])
+        chart[0].add(s)
         return self.fill_chart(chart)
 
 
