@@ -96,7 +96,7 @@ class G {
             return Double.POSITIVE_INFINITY;
         }
 
-        double min = 0;
+        double min = Double.POSITIVE_INFINITY;
         for (GRule r : this.grammar.get(k)) {
             Set<String> inter = new HashSet<String>(seen);
             inter.add(k);
