@@ -263,6 +263,9 @@ class State extends Item {
             }
             lst.add(this.expr.get(i).toString());
         }
+        if (this.dot == this.expr.size()) {
+            lst.add("|");
+        }
         //lst = [ str(p) for p in [*this.expr[:this.dot], '|', *this.expr[this.dot:]] ]
         return this.name + ":= " + String.join(" ", lst) + "(" + _idx(this.s_col) + "," + _idx(this.e_col) + ")";
     }
@@ -346,7 +349,7 @@ class EarleyParser extends Parser {
         this.epsilon = g.nullable();
     }
 
-    void predict(Column col, String sym,State state) {
+    void predict(Column col, String sym, State state) {
         for (GRule alt : this.grammar.get(sym)) {
             col.add(new State(sym, alt, 0, col, null));
         }
@@ -357,7 +360,8 @@ class EarleyParser extends Parser {
 
     void scan(Column col, State state, char letter) {
         if (letter == col.letter) {
-            col.add(state.advance());
+            State s = state.advance();
+            col.add(s);
         }
     }
 
@@ -487,7 +491,7 @@ class EarleyParser extends Parser {
                 throw new RuntimeException("Only single chars allowed.");
             }
             if (til > 0 && chart.get(til).letter == var.charAt(0)) {
-                starts.add(new SIInfo(new State(null, expr, 0, null, null), til - var.length(), 't'));
+                starts.add(new SIInfo(new State(var, new GRule(), 0, null, null), til - var.length(), 't'));
             }
         } else {
             for (State s: chart.get(til).states) {
@@ -784,7 +788,7 @@ public class ParserLib {
     }
 
     public void _show_tree(ParseTree result, int indent) {
-        System.out.println(" ".repeat(indent) + result.name);
+        System.out.println("   ".repeat(indent) + result.name);
         for (ParseTree p : result.children) {
             this._show_tree(p, indent + 1);
         }

@@ -314,12 +314,13 @@ class Column:
             str(state) for state in self.states if state.finished()))
 
     def add(self, state):
-        if state in self._unique:
-            return self._unique[state]
-        self._unique[state] = state
+        s_state = str(state)
+        if s_state in self._unique:
+            return self._unique[s_state]
+        self._unique[s_state] = state
         self.states.append(state)
         state.e_col = self
-        return self._unique[state]
+        return self._unique[s_state]
 
     def __init__(self, index, letter):
         self.index, self.letter = index, letter
@@ -397,7 +398,8 @@ class EarleyParser(Parser):
 
     def scan(self, col, state, letter):
         if letter == col.letter:
-            col.add(state.advance())
+            s = state.advance()
+            col.add(s)
 
 
     def complete(self, col, state):
