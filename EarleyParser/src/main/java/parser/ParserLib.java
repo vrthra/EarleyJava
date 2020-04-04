@@ -477,7 +477,11 @@ class EarleyParser extends Parser {
     ArrayList<ArrayList<SK>> parse_paths(GRule named_expr, List<Column> chart, int frm, int til) {
         ArrayList<SIInfo> starts = new ArrayList<SIInfo>();
         String var = named_expr.get(named_expr.size()-1);
-        GRule expr = (GRule) named_expr.subList(0, named_expr.size() - 2);
+        GRule expr = new GRule();
+        for (int i = 0; i < named_expr.size()-1; i++) {
+            expr.add(named_expr.get(i));
+        }
+        //(GRule) named_expr.subList(0, named_expr.size() - 1);
         if (!this.grammar.containsKey(var)) {
             if (var.length() != 1) {
                 throw new RuntimeException("Only single chars allowed.");
