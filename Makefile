@@ -1,5 +1,8 @@
-all: javaparser
-	@echo done.
+all: compile
+	$(MAKE) javaparser
+
+compile:
+	cd EarleyParser; mvn clean compile
 
 debug=-m pudb
 pythonparser:

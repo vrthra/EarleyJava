@@ -397,7 +397,11 @@ class EarleyParser extends Parser {
     List<Column> fill_chart(List<Column> chart) {
         for (int i = 0; i < chart.size(); i++) {
             Column col = chart.get(i);
-            for (State state: col.states) {
+            // col.states get modified.
+            int j = 0;
+            while (j < col.states.size()) {
+                //for (State state: col.states)
+                State state = col.states.get(j++);
                 if (state.finished()) {
                     this.complete(col, state);
                 } else {
