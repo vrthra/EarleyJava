@@ -135,7 +135,16 @@ class G {
                         rule_.add(token);
                     } else {
                         for (String c : token.split("")) {
-                            rule_.add(c);
+                            int l = c.length();
+                            switch (l) {
+                                case 1:
+                                    rule_.add(c);
+                                    break;
+                                case 0:
+                                    break;
+                                default:
+                                    throw new RuntimeException("Invalid token");
+                            }
                         }
                     }
                 }
@@ -412,11 +421,17 @@ class EarleyParser extends Parser {
                         if (i + 1 >= chart.size()) {
                             continue;
                         }
-                        if (sym.length() != 1) {
-                            throw new RuntimeException("Only single characters allowed");
+                        int l = sym.length();
+                        switch (l) {
+                            case 1:
+                                char c = sym.charAt(0);
+                                this.scan(chart.get(i + 1), state, c);
+                                break;
+                            // case 0:
+                            //    should not happen: state.finished() should be true
+                            default:
+                                throw new RuntimeException("Only single characters allowed");
                         }
-                        char c = sym.charAt(0);
-                        this.scan(chart.get(i + 1), state, c);
                     }
                 }
             }
