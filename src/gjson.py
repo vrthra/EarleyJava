@@ -42,7 +42,12 @@ json_grammar = { "<start>": [
     "<characters>": [
         [""],
         ["<character>", "<characters>"]],
-    "<character>": ([[chr(i)] for i in range(0x0020,0x10FFFF) if chr(i) not in {'"', '\\'}] + [["\\", "<escape>"]]),
+    "<character>": (
+        [
+            #[chr(i)] for i in range(0x0020,0x10FFFF + 1)
+            [chr(i)] for i in range(0x0020,0x10FFFF + 1)
+            if chr(i) not in {'"', '\\'}]
+        + [["\\", "<escape>"]]),
     "<escape>": [
         ["\""],
         ["\\"],
