@@ -4,6 +4,9 @@ import copy
 import random
 import re
 
+import pudb
+bp = pudb.set_trace
+
 def tree_to_string(node):
     name, children, *rest = node
     if (name[0], name[-1]) != ('<', '>'):
@@ -349,7 +352,9 @@ class Item:
         return Item(self.name, self.expr, self.dot + 1)
 
     def at_dot(self):
-        return self.expr[self.dot] if self.dot < len(self.expr) else None
+        if self.dot < len(self.expr):
+            return self.expr[self.dot]
+        return None
 
 class State(Item):
     def __init__(self, name, expr, dot, s_col, e_col=None):
@@ -517,6 +522,10 @@ class TState(State):
         return TState(self.name, self.expr, self.dot, self.s_col, self.e_col)
 
 class LeoParser(EarleyParser):
+    def __init__(self, grammar, **kwargs):
+        super().__init__(grammar, **kwargs)
+        self._postdots = {}
+
     def complete(self, col, state):
         return self.leo_complete(col, state)
 
@@ -526,19 +535,6 @@ class LeoParser(EarleyParser):
             col.add(detred.copy())
         else:
             self.earley_complete(col, state)
-
-    def deterministic_reduction(self, state):
-        raise NotImplemented()
-
-    def uniq_postdot(self, st_A):
-        col_s1 = st_A.s_col
-        parent_states = [
-            s for s in col_s1.states if s.expr and s.at_dot() == st_A.name
-        ]
-        if len(parent_states) > 1:
-            return None
-        matching_st_B = [s for s in parent_states if s.dot == len(s.expr) - 1]
-        return matching_st_B[0] if matching_st_B else None
 
     def get_top(self, state_A):
         st_B_inc = self.uniq_postdot(state_A)
@@ -556,10 +552,6 @@ class LeoParser(EarleyParser):
 
     def deterministic_reduction(self, state):
         return self.get_top(state)
-
-    def __init__(self, grammar, **kwargs):
-        super().__init__(grammar, **kwargs)
-        self._postdots = {}
 
     def uniq_postdot(self, st_A):
         col_s1 = st_A.s_col
