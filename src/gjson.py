@@ -93,10 +93,10 @@ json_grammar = { "<start>": [
             [""],
             ["<sp1>", "<ws>"]],
     "<sp1>": [
-            [chr(0x0020)],
-            [chr(0x000A)],
-            [chr(0x000D)],
-            [chr(0x0009)]]
+            [chr(0x0020)], # ' '
+            [chr(0x000A)], # '\n'
+            [chr(0x000D)], # '\r'
+            [chr(0x0009)]] # '\t'
     }
 
 print(json.dumps(json_grammar, indent=4))
