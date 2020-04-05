@@ -31,7 +31,7 @@ json_grammar = { "<start>": [
         ],
     "<elements>": [
         ["<element>"],
-        ["<element>", "<elements>"]
+        ["<element>", ",", "<elements>"]
         ],
     "<element>": [
         ["<ws>", "<value>", "<ws>"]
