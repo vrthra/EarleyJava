@@ -4,10 +4,13 @@ all: compile
 compile:
 	cd EarleyParser; mvn clean compile
 
+myfile=EarleyParser/myfile.json
+grammar=EarleyParser/jsongrammar_ascii.json
+
 debug=-m pudb
 pythonparser:
-	python3 $(debug) src/Parser.py EarleyParser/grammar.json EarleyParser/myfile.txt
+	python3 $(debug) src/Parser.py $(grammar) $(myfile)
 
 cp=~/.m2/repository/org/json/json/20160810/json-20160810.jar:EarleyParser/target/classes
 javaparser:
-	java -cp $(cp) parser.App EarleyParser/grammar.json EarleyParser/myfile.txt
+	java -cp $(cp) parser.App $(grammar) $(myfile)

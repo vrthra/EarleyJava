@@ -9,7 +9,7 @@
             "name": "Debug (Launch) - Current File",
             "request": "launch",
             "mainClass": "${file}",
-            "args": "grammar.json myfile.txt"
+            "args": "jsongrammar_ascii.json myfile.json"
         },
         {
             "type": "java",
@@ -17,7 +17,7 @@
             "request": "launch",
             "mainClass": "parser.App",
             "projectName": "EarleyParser",
-            "args": "grammar.json myfile.txt"
+            "args": "jsongrammar_ascii.json myfile.json"
         }
     ]
 }
