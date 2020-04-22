@@ -352,8 +352,8 @@ class EarleyParser extends Parser {
     List<String> epsilon;
     List<Column> table;
     private boolean log = false;
-    public EarleyParser(Grammar grammar) {
-        super(grammar);
+    public EarleyParser(Grammar grammar, String start) {
+        super(grammar, start);
         G g = new G(grammar);
         this.epsilon = g.nullable();
     }
@@ -407,7 +407,7 @@ class EarleyParser extends Parser {
         for (int i = 0; i < chart.size(); i++) {
             Column col = chart.get(i);
             // col.states get modified.
-            if (col.states.size() == 0 && (i < chart.size() -1)) {
+            /*if (col.states.size() == 0 && (i < chart.size() -1)) {
                     boolean has_more = false;
                     for (int k = i; k < chart.size(); k++) {
                         Column c = chart.get(i);
@@ -418,7 +418,7 @@ class EarleyParser extends Parser {
                     if (!has_more) {
                         throw new RuntimeException("at " + i);
                     }
-            }
+            }*/
             int j = 0;
             while (j < col.states.size()) {
                 //for (State state: col.states)
@@ -836,7 +836,7 @@ public class ParserLib {
         Path path = FileSystems.getDefault().getPath(text_file);
         String content = Files.readString(path, StandardCharsets.UTF_8);
 
-        EarleyParser ep = new EarleyParser(this.grammar);
+        EarleyParser ep = new EarleyParser(this.grammar, start);
         Iterator<ParseTree> result = ep.parse(content);
         if (result.hasNext()) {
             return result.next();
