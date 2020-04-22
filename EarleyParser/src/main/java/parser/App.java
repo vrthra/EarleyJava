@@ -12,7 +12,7 @@ public class App {
         try {
             pl = new ParserLib(args[0]);
             ParseTree result = pl.parse_text(args[1]);
-            pl.show_tree(result);
+            System.out.println(pl.get_json(result).toString(4));
         } catch (ParseException e) {
             e.printStackTrace();
         } catch (IOException e) {

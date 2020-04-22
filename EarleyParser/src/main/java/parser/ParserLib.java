@@ -407,6 +407,18 @@ class EarleyParser extends Parser {
         for (int i = 0; i < chart.size(); i++) {
             Column col = chart.get(i);
             // col.states get modified.
+            if (col.states.size() == 0 && (i < chart.size() -1)) {
+                    boolean has_more = false;
+                    for (int k = i; k < chart.size(); k++) {
+                        Column c = chart.get(i);
+                        if (c.states.size() > 0) {
+                            has_more = true;
+                        }
+                    }
+                    if (!has_more) {
+                        throw new RuntimeException("at " + i);
+                    }
+            }
             int j = 0;
             while (j < col.states.size()) {
                 //for (State state: col.states)
@@ -803,6 +815,15 @@ public class ParserLib {
         for (ParseTree p : result.children) {
             this._show_tree(p, indent + 1);
         }
+    }
+
+    public JSONArray get_json(ParseTree result) {
+        JSONArray jobj = new JSONArray();
+        jobj.put(result.name);
+        for (ParseTree p : result.children) {
+            jobj.put(this.get_json(p));
+        }
+        return jobj;
     }
 
     public void show_tree(ParseTree result) {
