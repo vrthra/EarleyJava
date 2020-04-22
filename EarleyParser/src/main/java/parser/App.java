@@ -11,7 +11,7 @@ public class App {
         ParserLib pl;
         try {
             pl = new ParserLib(args[0]);
-            ParseTree result = pl.parse_text(args[1]);
+            ParseTree result = pl.parse_text(args[1], pl.start_symbol);
             System.out.println(pl.get_json(result).toString(4));
         } catch (ParseException e) {
             e.printStackTrace();

@@ -783,6 +783,7 @@ class IterativeEarleyParser(LeoParser):
 
 public class ParserLib {
     Grammar grammar;
+    String start_symbol;
 
     public Grammar loadGrammar(JSONObject json_grammar) {
         Grammar g = new Grammar();
@@ -807,7 +808,8 @@ public class ParserLib {
         Path path = FileSystems.getDefault().getPath(grammar_file);
         String content = Files.readString(path, StandardCharsets.UTF_8);
         JSONObject json_grammar = new JSONObject(content);
-        grammar = this.loadGrammar(json_grammar);
+        this.start_symbol = json_grammar.getString("[start]");
+        this.grammar = this.loadGrammar(json_grammar.getJSONObject("[grammar]"));
     }
 
     public void _show_tree(ParseTree result, int indent) {
@@ -830,7 +832,7 @@ public class ParserLib {
         this._show_tree(result, 0);
     }
 
-    public ParseTree parse_text(String text_file) throws ParseException, IOException {
+    public ParseTree parse_text(String text_file, String start) throws ParseException, IOException {
         Path path = FileSystems.getDefault().getPath(text_file);
         String content = Files.readString(path, StandardCharsets.UTF_8);
 
