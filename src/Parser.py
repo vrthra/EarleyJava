@@ -3,6 +3,7 @@ import string
 import copy
 import random
 import re
+import itertools as I
 
 import pudb
 bp = pudb.set_trace
@@ -504,7 +505,7 @@ class EarleyParser(Parser):
         results = []
         for path in paths:
             ptrees = [self.extract_trees(self.forest(*p)) for p in path]
-            for p in zip(*ptrees):
+            for p in I.product(*ptrees):
                 yield (name, p) 
 
     def __init__(self, grammar, **kwargs):
