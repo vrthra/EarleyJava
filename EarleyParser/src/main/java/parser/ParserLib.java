@@ -570,7 +570,7 @@ class EarleyParser extends Parser {
 
         ArrayList<ParseTree> lst = new ArrayList<ParseTree>();
 
-		for (TPath p : forest_node.paths.get(0)) {
+        for (TPath p : forest_node.paths.get(0)) {
             lst.add(this.extract_a_tree(this.forest(p.sk.s, p.sk.k, p.chart)));
         }
         //[self.extract_a_tree(self.forest(*p)) for p in paths[0]]
